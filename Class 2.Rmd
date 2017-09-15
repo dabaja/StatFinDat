@@ -1,0 +1,33 @@
+---
+title: "Class2"
+author: "DABAJA"
+date: "9/15/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(timeDate)
+library(mvtnorm)
+library(quadprog)
+library(rgl)
+library(robustbase)
+library(scatterplot3d)
+library(SparseM)
+library(tseries)
+library(Rsafd)
+```
+
+Upload necessary data sets
+
+```{r}
+lazyLoad(filebase = "/Users/dawidjarosz/Dropbox/Semester\ 11/Statistical\ Analysis\ of\ Financial\ Data/Class\ 1/Rsafd/data/Rdata", 
+         envir = parent.frame())
+```
+
+Class notes
+
