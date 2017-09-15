@@ -1,0 +1,109 @@
+---
+title: "Class 1"
+author: "DABAJA"
+date: "9/13/2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Instal packages 
+```{r Packages}
+#install.packages(c("timeDate","mvtnorm","quadprog","quantreg","rgl","robustbase","scatterplot3d","SparseM","tseries"))
+#install.packages("/Users/dawidjarosz/Dropbox/Semester\ 11/Statistical\ Analysis\ of\ Financial\ Data/Class\ 1/Rsafd", repos = NULL, type="source")
+
+library(timeDate)
+library(mvtnorm)
+library(quadprog)
+library(rgl)
+library(robustbase)
+library(scatterplot3d)
+library(SparseM)
+library(tseries)
+library(Rsafd)
+```
+
+Load the data set: Rdata rdb - file with databases he works with in the book. 
+```{r}
+lazyLoad(filebase = "/Users/dawidjarosz/Dropbox/Semester\ 11/Statistical\ Analysis\ of\ Financial\ Data/Class\ 1/Rsafd/data/Rdata", 
+         envir = parent.frame())
+```
+
+```{r}
+wn <- rnorm(1024)
+```
+Samuelson 
+```{r}
+DELTAT <- 1/252
+SIG <- .2*sqrt(DELTAT)
+MU <- .15*DELTAT
+TIME <- (1:1024)/252
+STOCK <- rep(0,1024) #repeats a zero for every entry 
+```
+
+Model
+```{r}
+for (i in 1:1024) {
+  STOCK[i] <- exp(SIG*RW[i] + MU*TIME[i]) # this is exponential 
+}
+```
+
+without a loop 
+
+```{r}
+STOCK <- exp(SIG*RW + MU*TIME)
+```
+
+Plot
+```{r}
+plot(TIME, STOCK, type="l")
+```
+
+
+
+```{r}
+head(HOWAREYOU)
+```
+
+Building function, Black and Scholes - 
+
+```{r}
+S <- 100 #stock price 
+K <- S 
+R <- .4 #per year
+SIG <- .2 #annualized vol 
+
+TAU <-90/252  #time to maturity, trading days. 
+
+d1 <- log(S/K) + TAU * (R+SIG^2/2)
+d2 <- d1/(SIG*sqrt(TAU))
+d2 <- d1 - SIG*sqrt(TAU)
+```
+
+Making a BS funciton, pricing a call. 
+
+bs_call <- function() #locally 
+
+fix(bs_call) #for any other script, use it a lot, this is how you'll have access to it later
+
+# the function doesn't work 
+```{r}
+bs_call <- function(S=100, 
+                    K=100,
+                    R=.1,
+                    SIG=2,
+                    TAU=90/252){
+  d1 <- log(S/K) + TAU * (R+SIG^2/2)
+  d1 <- d1/(SIG*sqrt(TAU))
+  d2 <- d1 - SIG*sqrt(TAU)
+
+  c <- s*pnorm(d1) - K*exp(-R*TAU)*pnorm(d2)
+  return(c)                  }
+```
+
+```{r}
+#bs_call(S=109, K=109, R=0.2)
+```
+
