@@ -29,5 +29,327 @@ lazyLoad(filebase = "/Users/dawidjarosz/Dropbox/Semester\ 11/Statistical\ Analys
          envir = parent.frame())
 ```
 
-Class notes
+Office hours: Mon 3-4PM 214 2nd floor 
+
+Class notes: 
+Part 2: regression analysis 
+Part 3: Time series analysis (Deep learning - and how useful deep learning is.)
+
+Logistics: 6 homeworks. 
+
+
+Univariate distribution: 
+
+Density is mass divided by volume. 
+
+1) PDF - function, what are the conditions, any funciton f such that f(x) great or equal to zero and integral of i) $\int f(x)dx=1$
+$x \rightarrow f(x)$ x follows the distribution. 
+
+What is the probability that x lays between a and b
+
+QQ plots: From the QQ plots you can tell which has fat and which has normal tails. The flatter the line - the fatter the tails 
+QQ plots reflect this.
+
+Conventions
+# dname: density
+# pname: cumulative
+# qname: quantiles
+# rname: random samples
+# Examples: Exponential 
+
+```{r}
+x <- seq(from=0, to=1, length=1024)
+
+y <- qexp(x) #vector of qentiles 
+
+z <- pexp(y) # it is the same qhat x is - we are doing the inverse. 
+
+rand_exp <- rexp(1024, rate=1) #random vector  length 1024, rate of exponential is 1 
+```
+
+## QQ Plots
+Comparing relative sizes of two distributions. We will use x that we will call s over here. 
+
+```{r}
+s <- seq(from=0, to=1, length=1024)
+
+x <- qexp(s,1)
+y <- qlnorm(s,0,1)
+
+plot(x,y, type="l",
+     col="blue", 
+     xlab="qexp", ylab="qlnorm", main="QQ plot of lognormal vs exp")
+abline(0,1)
+```
+
+Normal vs Cauchy
+
+```{r}
+x <- qnorm(s,0,1)
+y <- qcauchy(s, location=0, scale=1)
+
+plot(x,y, type="l",
+     col="blue", 
+     xlab="qnorm", ylab="qcauchy", main="QQ plot of lognormal vs Cauchy")
+abline(0,1)
+```
+
+
+```{r}
+y <- qt(s,5) # 5 stands for degrees of freedo, 
+plot(x,y, type="l",
+     col="blue", 
+     xlab="Xchi", ylab="qlnorm", main="QQ plot of lognormal vs exp")
+abline(0,1)
+```
+
+```{r}
+QQ1 <- function(df){
+  x <- qcauchy(s,0,1)
+  y <- qt(s,df)
+  plot(x,y, type="l", col="blue", lwd="4")
+}
+
+QQ1(3) # increasing the df makes it S shaped. If I do one df the are equally fat. 
+```
+
+
+You use it - to compare how many df I need - for Chi to resemble my data - emirically this is what you are looking for. Which distribution my data resembles. 
+
+\pagebreak 
+\section{VAR}
+
+```{r}
+a <- read.csv("") #upload this once she gives it
+attach(a) #means if i want to view the data you only say "Open" - which is a variable in your data set. So you can reference variables in your set without x$open
+
+```
+
+1. Calculate log returns
+We have only time series of prices, calculate log returns. 
+
+```{r}
+while(i<n){
+  r <- log(Open[i+1]/Open[i],exp(1))
+  rend[i] <- r
+  i=i+1
+}
+
+data <- c(length(Open), mean(Open), mean(rend), sd(rend))
+names(data) <-c("Tot days", "Av Price","Daily chan", "Daily Vol")
+
+vol <- data[4] # I think it refers to the holding period.
+
+rendd <- data[3]
+```
+
+\section{VAR calculations}
+
+
+VAR - in case of normal distribtuins 2 sd is -1.96 
+2 ways of calc VAR: 
+1. Historical 
+Also depnds  ont the value of your portfolio, but now we are using quantile ,(a funciton) depending on alpha (5%) and historical returns. quantile(1-\alpha, Historical Returns)
+
+2. Parametric
+Comes directly form the normal distribution. If my returns are normal, the VAR will be initila VAlue of my portfolio. The are alway in the same. We are looking for the number 
+It will depend on the value of your portfolio - that is why you need to put an intiial value of your portfolio in the equation
+
+3. Mont Carlo 
+
+
+
+
+
+```{r}
+az <- 1000 #number of stocks in my portfolio - so you need to multiply the price by the number of stocks. 
+
+value1 <- Open[1] #actual price, the first position in a vector. 
+
+valuep <- value1*az #value of a portfolio - so you need to multiply the price by the number of stocks. 
+
+hp <- 1
+a <- .95
+```
+
+Parametric VaR:
+
+Var is a negative number, that is why you put an abs - which is absoute value - so you say my "VAR is 500k"
+Value of a portfoli (price times the amount of stock) is only a scaling manouver. Also you are scaling it by the holding period 
+
+```{r}
+parvar <- abs(valuep*qnorm(1-a, 0, 1)*vol*sqrt(hp))
+```
+
+
+#Hist Var
+```{r}
+hvar <- abs(valuep*quantile(rend, 1-a))
+
+varv <- c(parvar, hvar)
+
+names(varv) <- c("parametric var", "historical var")
+
+print(varv)
+
+detach(a)
+```
+
+
+
+\section{Non parametric estimation}
+
+```{r}
+head(PCS) #yaer2year damage, insurance industry. 
+
+plot(PCS[,1], PCS[,2], type="p") 
+```
+Most of the time they pay something, sometimes - they pay a lot. 
+
+```{r}
+head(CPN) #daily values of Calpine stocks
+
+CPNLRet <- diff(log(CPN))
+
+quantile(CPNLRet, c(0.01, 0.05, .25,.5,.75,.99)) # how bad it can do on a given scenario 
+```
+
+```{r}
+RKS <- order(CPNLRet) #orders the index, 
+OCPNLRet <- CPNLRet[RKS] #want to take the vector of returns and order it from worse to best 
+
+par(mfrow=c(1,2))
+plot(CPNLRet, type="l")
+plot(OCPNLRet, type="l") # DO THIS - you order the returns to see what shape does it have. 
+```
+
+# Computing quantiles without quantile funciton
+Usually you can use it from the quantile function 
+
+```{r}
+L <- length(OCPNLRet)
+P <- 0.01
+
+OCPNLRet[ceiling(P*L)] #length of a vector multiplied by 0.01 this will give you the actual number. 
+
+P <- .75
+OCPNLRet[ceiling(P*L)]
+
+quantile(CPNLRet, c(0.01, 0.05, .25,.5,.75,.99)) # you can compare the results from the quantile and our function
+```
+
+
+\section{Histogram}
+```{r}
+par(mfrow=c(1,2))
+hist(CPNLRet)
+hist(CPNLRet, breaks = 25, col = "blue", freq = F) #now you have a density!!! d
+```
+\section
+# Kernels
+
+```{r}
+?WSP #weakly quates of the SP500
+head(WSP)
+tail(WSP)
+length(WSP)
+```
+
+```{r}
+WSPLRET <- diff(log(WSP))
+N <- length(WSPLRET)
+
+par(mfrow=c(1,2)) #one line and two columns graph
+plot(WSP.ts) #time series
+plot(WSPLRET, type="l")
+```
+
+```{r}
+hist(WSPLRET, col="blue", border="yellow" ,breaks=12)
+```
+
+```{r}
+DENS1 <- density(WSPLRet, bw=.01)
+plot(DENS1, lwd="4")
+```
+
+```{r}
+DENS2 <- density(WSPLRet, bw=.01, kernel = "gaussian")
+plot(DENS2, lwd="4")
+```
+
+Bendtdwith matteers type rectangular
+```{r}
+DENS3 <- density(WSPLRet, bw=.1, kernel = "rectangular")
+plot(DENS3, lwd="4")
+```
+
+
+```{r}
+DENS4 <- density(WSPLRet, bw=.1, kernel = "triangular")
+plot(DENS4, lwd="4")
+```
+
+
+
+```{r}
+chbw <- function(b) {
+  DENS <- density(WSPLRet, bw=b, kernel = "triangular")
+  plot(DENS, lwd="4")
+}
+
+chbw(0.8) #bandwith is like sigma?
+```
+
+We are adding lines - joining them, putting them together. The type F menas it's a density that is why we are able to compare them. I think this is comparing histogram to kernel? x is the returns we are getting, and y is how many times we are getting it. 
+
+```{r}
+DENS <- density(WSPLRet)
+hist(WSPLRet, breaks = 25, col="blue", freq = F, ylim=c(0,30)) 
+lines(DENS$x, DENS$y)
+```
+
+
+```{r}
+qqnorm(WSPLRET)
+```
+Clearly fat tailes. 
+
+```{r}
+Mean <- mean(WSPLRet)
+Std <- sd(WSPLRet)
+N <- length(WSPLRet)
+
+ndata <- rnorm(N, Mean, Std)
+
+qqplot(ndata, WSPLRet, type="l", col="blue", lwd="4")
+abline(0,1, col="red", lwd="4")
+
+```
+
+
+Monte CArlo
+```{r}
+GWN <- rnorm(1024)
+CWN <- rcauchy(1024)
+
+plot(GWN, type="l")
+
+plot(CWN, type="l")
+
+```
+
+BCS Cauchy has fat tales - this is normal that it doesn't look like WN! Thhus MC 
+
+\section{Monte Carlo }
+
+pmax - R takes for each line a maximum and it generates a vector of maximums. and you excuty it when XX-K is positive, otherwise it will be zero. 
+
+
+
+
+
+
+
+
 
