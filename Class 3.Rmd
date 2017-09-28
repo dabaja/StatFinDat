@@ -1,0 +1,196 @@
+---
+title: "Class 3"
+author: "DABAJA"
+date: "9/27/2017"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(timeDate)
+library(mvtnorm)
+library(quadprog)
+library(rgl)
+library(robustbase)
+library(scatterplot3d)
+library(SparseM)
+library(tseries)
+library(Rsafd)
+```
+
+
+```{r}
+lazyLoad(filebase = "/Users/dawidjarosz/Dropbox/Semester\ 11/Statistical\ Analysis\ of\ Financial\ Data/Rsafd/data/Rdata", 
+         envir = parent.frame())
+```
+
+\section{Generalized Pareto Distribution}
+
+GPD - In statistics, the generalized Pareto distribution (GPD) is a family of continuous probability distributions. It is often used to model the tails of another distribution. It is specified by three parameters: location $\mu$ , scale $\sigma$ , and shape  $\xi$ . Sometimes it is specified by only scale and shape and sometimes only by its shape parameter. Some references give the shape parameter as $\kappa = - \xi$ 
+
+We plotting 3 one sided pareto distributions. To check how side parameters affect the... 
+
+```{r}
+x <- seq(from=.2, to=15, length=5000)
+```
+
+Ploting the shappes of various GPDs and the $\xi$ is being modifiad. 
+```{r Graphing GPD}
+plot(x, dpareto(x,xi=.2), type="l", ylab="GPD densities", ylim=c(-.05,1.1))
+points(x,dpareto(x,xi=1.6), type="l", lty=3)  #now we are changing the $\xi$ so the tail is going steaper and steaper. 
+points(x,dpareto(x,xi=2.5), type="l", lty=5)
+abline(h=0)
+abline(v=0)
+```
+\section{Generalized Extreme Values}
+
+Changing the sequence
+```{r}
+x <- seq(from=-2.2, to=8, length=5000)
+```
+
+Ploting it \textbf{Generalized Extreme Values}
+
+```{r}
+plot(x, dgev(x,xi=.2), type="l", ylab="GEV densities", ylim=c(-.05,0.9))
+points(x,dgev(x,xi=0.6), type="l", lty=3)  #now we are changing the $\xi$ so the tail is going steaper and steaper. 
+points(x,dgev(x,xi=1.5), type="l", lty=5)
+abline(h=0)
+abline(v=0)
+```
+
+\section{Block Maxima}
+
+```{r}
+XX <- rpareto(1000000, xi=.4)
+dim(XX) <- c(1000,1000)
+
+MAX <- apply(XX, 2, max) #apply the max function on the matrix's collumn, you get a vector of max from each column. 2 - menas columns. 
+
+qqplot(MAX, rgev(1000, xi=0.4)) #plots the MAX against the random of GEV, and MAX is heavier than... 
+abline(0,1)
+```
+
+\section{Estimating the parameters}
+
+MLE or MOM, if we have fat tail distribution look at Calculating L moments. p.83. 
+
+Formula for L moments p.83
+
+$\lambda_1= \alpha_0 = \int_0^1 F^{-1}(p)d $
+$\lambda_2 = 2\alpha_1-\alpha_0 ... $
+
+we are interested in the parameters and to verify if they are comparable to the theoretiacal ones mentioned in the book. 
+If $m=0, \lambda=1, \xi=0$ then we are looking at the standard exponential distribution. 
+
+```{r}
+x <- rpareto(1000)
+sample.LMOM(x)
+```
+
+In case we don't have enough observations:
+```{r}
+x <- rpareto(50, xi=0.4)
+
+PPML <- plotting.positions(x)
+PPML
+
+SLM <- sample.LMOM(x)
+SLM
+```
+
+L moments of GEV distribution
+
+```{r}
+x <- rgev(500, lambda=3.5, xi=0.4)
+LMOMX <- sample.LMOM(x)
+LMOMX
+```
+
+```{r}
+x = rpareto(500, xi=0.4)
+SLM <- sample.LMOM(x)
+# gdp.lmom(SLM, location=0)
+```
+
+\section{Max likelihood estimation}
+
+How to estimate these parameters. 
+
+\textbf{For GEV}
+```{r}
+x <- rgev(500, lambda = 3.5, xi=0.4)
+gev.ml(x)
+```
+
+\textbf{For GDP}
+```{r}
+y <- rpareto(500, lambda = 3.5, xi=0.4)
+gpd.ml(y)
+```
+
+
+\section{Example PCS}
+
+```{r}
+data(PCS)
+head(PCS)
+PCS.index <- PCS[,2]
+```
+
+Fitting a GPD to the PCS.index data
+
+```{r}
+PCS.lmom <- gpd.lmom(PCS.index) 
+```
+
+Visualize
+density = 20 makes the lines over the bars. 
+
+```{r}
+hist(PCS.index, breaks = 25, density = 20, freq = F)
+```
+
+Fix this code
+
+```{r}
+hist(PCS.index,breaks=25,density=20,freq=F) 
+x <- seq(from=-1,to=160,length=1000)
+points(x,dpareto(x,m=PCS.lmom$param.est[1],lambda=PCS.lmom$param.est[2],
+                 xi=PCS.lmom$param.est[3]),type="l")
+```
+
+1. Check the goodness of fit in the tail 
+2. generate large random sample from distribution fitted to the data 
+3. produce qqq plot of Monte Carlo sample against original data set PCS. 
+
+re: the chart - the tails are not well fitted. -> Method of Moments not as good as MAX likelihood. 
+
+```{r}
+PCS.ml <- gpd.ml(PCS.index)
+PCS.ml <- PCS.ml$param.est
+PCS.ml
+```
+As before, we are doing the monte Carlo
+
+```{r}
+PCS.rml <- rpareto(n=10000, m= PCS.lmom$param.est[1],
+                   lambda = PCS.lmom$param.est[2],
+                   xi = PCS.lmom$param.est[3])
+
+qqplot(PCS.index, PCS.rml)
+abline(0,1, col="red")
+```
+We are getting a good fit, they vary according to random sample - they are not fixed. 
+
+
+
+
+Notes: 2.3 is being skipped
+
+Q: is there a difference in estimating the VAR for portfolio?
